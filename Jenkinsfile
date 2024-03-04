@@ -74,12 +74,38 @@ pipeline{
             }
         }
 
-        stage('Jfrog push'){
+        stage ('Server'){
+            steps {
+               rtServer (
+                 id: "artifactory",
+                 url: 'http://localhost:8082/artifactory',
+                 username: 'admin',
+                  password: 'Rocknite(00)',
+                  bypassProxy: true,
+                   timeout: 300
+                        )
+            }
+        }
+        stage('Upload'){
             steps{
-               script{
-                   
-                   sh 'curl -X PUT -u admin -T kubernetes-configmap-reload-0.0.1-SNAPSHOT.jar http://3.213.118.163:8082/artifactory/example-repo-local/'
-               }
+                rtUpload (
+                 serverId:"artifactory" ,
+                  spec: '''{
+                   "files": [
+                      {
+                      "pattern": "*.jar",
+                      "target": "kubernetes-configmap-libs-snapshot"
+                      }
+                            ]
+                           }''',
+                        )
+            }
+        }
+        stage ('Publish build info') {
+            steps {
+                rtPublishBuildInfo (
+                    serverId: "artifactory"
+                )
             }
         }
 
